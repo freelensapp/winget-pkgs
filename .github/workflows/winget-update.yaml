@@ -1,0 +1,50 @@
+name: Automated WinGet update
+
+on:
+  schedule:
+    - cron: "13 6 * * *"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+  id-token: write
+  pull-requests: write
+
+jobs:
+  update:
+    name: WinGet update
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - id: Freelensapp.Freelens
+            repo: freelensapp/freelens
+            url: https://github.com/freelensapp/freelens/releases/download/v{VERSION}/Freelens-{VERSION}-windows-amd64.msi
+
+    runs-on: ubuntu-24.04
+    environment: automated
+
+    steps:
+      - name: Update Packages
+        uses: michidk/winget-updater@latest
+        with:
+          komac-version: 2.9.0
+          komac-token: ${{ secrets.GH_TOKEN }}
+          identifier: ${{ matrix.id }}
+          repo: ${{ matrix.repo }}
+          url: ${{ matrix.url }}
+
+  cleanup:
+    name: Cleanup branches
+    needs: update
+
+    runs-on: ubuntu-24.04
+    environment: automated
+
+    steps:
+      - name: Run Komac
+        uses: michidk/run-komac@latest
+        with:
+          komac-version: 2.9.0
+          args: cleanup --only-merged --token=${{ secrets.GH_TOKEN }}
