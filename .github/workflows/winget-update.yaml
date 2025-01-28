@@ -34,6 +34,7 @@ jobs:
           identifier: ${{ matrix.id }}
           repo: ${{ matrix.repo }}
           url: ${{ matrix.url }}
+          custom-fork-owner: freelensapp
 
   cleanup:
     name: Cleanup branches
@@ -48,3 +49,4 @@ jobs:
         with:
           komac-version: 2.9.0
           args: cleanup --only-merged --token=${{ secrets.GH_TOKEN }}
+          custom-fork-owner: freelensapp
