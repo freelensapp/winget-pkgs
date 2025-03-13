@@ -20,7 +20,7 @@ jobs:
         include:
           - id: Freelensapp.Freelens
             repo: freelensapp/freelens
-            url: https://github.com/freelensapp/freelens/releases/download/v{VERSION}/Freelens-{VERSION}-windows-amd64.msi
+            url: https://github.com/freelensapp/freelens/releases/download/v{VERSION}/Freelens-{VERSION}-windows-amd64.exe
 
     runs-on: ubuntu-24.04
     environment: automated
