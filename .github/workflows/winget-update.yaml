@@ -1,4 +1,4 @@
-name: Automated WinGet upgrade
+name: Automated WinGet update
 
 on:
   issue_comment:
@@ -19,7 +19,7 @@ permissions:
   pull-requests: write
 
 jobs:
-  trunk-upgrade:
+  winget-update:
     name: trunk upgrade
 
     runs-on: ubuntu-24.04
@@ -43,7 +43,7 @@ jobs:
 
       - name: Set version
         run: |
-          echo "version=$(yq -r '.freelens' .versions.yaml)" >> $GITHUB_ENV
+          echo "version=$(yq -r '.freelens' updates.tmp/.versions.yaml)" >> $GITHUB_ENV
 
       - name: Generate new manifests
         run: |
