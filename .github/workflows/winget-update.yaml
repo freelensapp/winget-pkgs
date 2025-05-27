@@ -20,7 +20,7 @@ permissions:
 
 jobs:
   winget-update:
-    name: trunk upgrade
+    name: WinGet update
 
     runs-on: ubuntu-24.04
     environment: automated
