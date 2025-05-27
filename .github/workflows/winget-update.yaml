@@ -41,11 +41,8 @@ jobs:
           ref: updates
           path: updates.tmp
 
-      - name: Mise
+      - name: Install mise
         uses: jdx/mise-action@v2
-        with:
-          tool_versions: |
-            yamlfmt 0.17.0 # datasource=github-releases depName=google/yamlfmt
 
       - name: Set version
         run: |

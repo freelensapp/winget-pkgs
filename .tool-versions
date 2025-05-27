@@ -1,0 +1,2 @@
+yamlfmt 0.17.0 # datasource=github-releases depName=google/yamlfmt
+yq      4.45.4 # datasource=github-releases depName=mikefarah/yq
