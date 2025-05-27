@@ -43,9 +43,20 @@ jobs:
 
       - name: Install mise
         uses: jdx/mise-action@v2
+        with:
+          working_directory: updates.tmp
 
       - name: Set version
         run: |
+          echo "version=$(yq -r '.freelens' updates.tmp/.versions.yaml)" >> $GITHUB_ENV
+
+      - name: Check if version already exists
+        run: |
+          if [[ -d manifests/f/Freelensapp/Freelens/${version} ]]; then
+            echo "pr_type=Update" >> $GITHUB_ENV
+          else
+            echo "pr_type=New version" >> $GITHUB_ENV
+          fi
           echo "version=$(yq -r '.freelens' updates.tmp/.versions.yaml)" >> $GITHUB_ENV
 
       - name: Generate new manifests
@@ -71,17 +82,19 @@ jobs:
         with:
           github_token: ${{ secrets.GH_TOKEN }}
           default_author: github_actions
-          message: "New version: Freelensapp.Freelens version ${{ env.version }}"
+          message: "${{ env.pr_type }}: Freelensapp.Freelens version ${{ env.version }}"
           new_branch: Freelensapp-Freelens-${{ env.version }}
           fetch: false
           push: origin Freelensapp-Freelens-${{ env.version }} --set-upstream --force
 
       - name: Create pull request
-        id: pr
         if: env.changes == 'true'
-        uses: devops-infra/action-pull-request@master
-        with:
-          github_token: ${{ secrets.GH_TOKEN }}
-          target_branch: master
-          title: "New version: Freelensapp.Freelens version ${{ env.version }}"
-          get_diff: false
+        run: |-
+          gh pr create \
+            --repo Freelensapp/Freelens \
+            --base master \
+            --head freelensapp:Freelensapp-Freelens-${{ env.version }} \
+            --title "${{ env.pr_type }}: Freelensapp.Freelens version ${{ env.version }}" \
+            --body "This PR updates the WinGet manifest for Freelensapp.Freelens version ${{ env.version }}."
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
