@@ -90,11 +90,18 @@ jobs:
       - name: Create pull request
         if: env.changes == 'true'
         run: |-
-          gh pr create \
+          if ! gh pr view \
             --repo freelensapp/freelens-winget \
-            --base master \
-            --head freelensapp:Freelensapp-Freelens-${{ env.version }} \
-            --title "${{ env.pr_type }}: Freelensapp.Freelens version ${{ env.version }}" \
-            --body "This PR updates the WinGet manifest for Freelensapp.Freelens version ${{ env.version }}."
+            --json url \
+            --jq .url \
+            Freelensapp-Freelens-${{ env.version }}
+          then
+            gh pr create \
+              --repo freelensapp/freelens-winget \
+              --base master \
+              --head freelensapp:Freelensapp-Freelens-${{ env.version }} \
+              --title "${{ env.pr_type }}: Freelensapp.Freelens version ${{ env.version }}" \
+              --body "This PR updates the WinGet manifest for Freelensapp.Freelens version ${{ env.version }}."
+          fi
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
