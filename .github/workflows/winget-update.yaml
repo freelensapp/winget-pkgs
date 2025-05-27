@@ -34,7 +34,7 @@ jobs:
           token: ${{ secrets.GH_TOKEN }}
           ref: master
 
-      - name: Checkout
+      - name: Checkout updates branch
         uses: actions/checkout@v4
         with:
           token: ${{ secrets.GH_TOKEN }}
@@ -91,7 +91,7 @@ jobs:
         if: env.changes == 'true'
         run: |-
           gh pr create \
-            --repo Freelensapp/Freelens \
+            --repo freelensapp/freelens-winget \
             --base master \
             --head freelensapp:Freelensapp-Freelens-${{ env.version }} \
             --title "${{ env.pr_type }}: Freelensapp.Freelens version ${{ env.version }}" \

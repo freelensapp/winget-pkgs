@@ -13,7 +13,7 @@ installerArm64Sha256Url=$(gh release view v1.3.0 -R freelensapp/freelens --json 
 installerX64Sha256=$(curl -sSL "${installerX64Sha256Url}" | cut -f1 -d' ' | tr '[:lower:]' '[:upper:]')
 installerArm64Sha256=$(curl -sSL "${installerArm64Sha256Url}" | cut -f1 -d' ' | tr '[:lower:]' '[:upper:]')
 
-gh release view v1.3.0 -R freelensapp/freelens --json body --jq .body | tr -d '\015' | sed -z 's/\n*$/\n/' >release-notes.tmp
+gh release view v1.3.0 -R freelensapp/freelens --json body --jq .body | tr -d '\015' | sed -z 's/\n*$//' >release-notes.tmp
 mkdir -p manifests/f/Freelensapp/Freelens/"${version}"
 
 yq '
