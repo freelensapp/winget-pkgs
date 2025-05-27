@@ -8,7 +8,7 @@
     {
       "customType": "regex",
       "extractVersionTemplate": "^v?(?<version>.*)$",
-      "managerFilePatterns": ["/\\.ya?ml$/"],
+      "managerFilePatterns": ["/\\.ya?ml$/", "/^.tool-versions$/"],
       "matchStrings": [
         "(\\s+|.*?@)(?<currentValue>\\S+)\\s*#\\s*datasource=(?<datasource>\\S+)\\s+depName=(?<depName>\\S+)(\\s+versioning=(?<versioning>\\S+))?(\\s+registryUrl=(?<registryUrl>\\S+))?\\s*\\n"
       ],
