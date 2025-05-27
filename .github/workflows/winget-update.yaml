@@ -8,7 +8,10 @@ on:
     branches:
       - updates
     paths:
-      - .trunk/**
+      - .github/workflows/winget-update.yaml
+      - .versions.yaml
+      - make.sh
+      - template/**
   workflow_dispatch: {}
 
 permissions:
