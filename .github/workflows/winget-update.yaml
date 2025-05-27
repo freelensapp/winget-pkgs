@@ -90,11 +90,11 @@ jobs:
       - name: Create pull request
         if: env.changes == 'true'
         run: |-
-          if ! gh pr view \
+          if [[ $(gh pr view \
             --repo freelensapp/freelens-winget \
-            --json url \
-            --jq .url \
-            Freelensapp-Freelens-${{ env.version }}
+            --json state \
+            --jq .state \
+            Freelensapp-Freelens-${{ env.version }} || true) != "OPEN" ]];
           then
             gh pr create \
               --repo freelensapp/freelens-winget \
