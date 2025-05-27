@@ -48,6 +48,8 @@ jobs:
           cd updates.tmp
           ln -s ../manifests manifests
           bash make.sh
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
 
       - name: Check for changes
         run: |
