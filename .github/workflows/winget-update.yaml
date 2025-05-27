@@ -34,6 +34,12 @@ jobs:
           token: ${{ secrets.GH_TOKEN }}
           ref: master
 
+      - name: Reset master branch
+        run: |
+          git remote add upstream https://github.com/microsoft/winget-pkgs.git
+          git fetch upstream
+          git reset --hard upstream/master
+
       - name: Checkout updates branch
         uses: actions/checkout@v4
         with:
