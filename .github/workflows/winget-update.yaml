@@ -100,7 +100,7 @@ jobs:
             --repo microsoft/winget-pkgs \
             --json state \
             --jq .state \
-            Freelensapp-Freelens-${{ env.version }} || true) != "OPEN" ]];
+            freelensapp:Freelensapp-Freelens-${{ env.version }} || true) != "OPEN" ]];
           then
             gh pr create \
               --repo microsoft/winget-pkgs \
