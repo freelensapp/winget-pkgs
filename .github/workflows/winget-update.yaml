@@ -91,13 +91,13 @@ jobs:
         if: env.changes == 'true'
         run: |-
           if [[ $(gh pr view \
-            --repo freelensapp/freelens-winget \
+            --repo microsoft/winget-pkgs \
             --json state \
             --jq .state \
             Freelensapp-Freelens-${{ env.version }} || true) != "OPEN" ]];
           then
             gh pr create \
-              --repo freelensapp/freelens-winget \
+              --repo microsoft/winget-pkgs \
               --base master \
               --head freelensapp:Freelensapp-Freelens-${{ env.version }} \
               --title "${{ env.pr_type }}: Freelensapp.Freelens version ${{ env.version }}" \
