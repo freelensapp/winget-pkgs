@@ -1,3 +1,4 @@
+line_ending: crlf
 formatter:
   eof_newline: false
   indentless_arrays: true
