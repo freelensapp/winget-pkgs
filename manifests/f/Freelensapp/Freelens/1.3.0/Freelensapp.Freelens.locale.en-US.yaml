@@ -12,13 +12,13 @@ License: MIT
 LicenseUrl: https://github.com/freelensapp/freelens/blob/HEAD/LICENSE
 ShortDescription: FOSS IDE for Kubernetes
 Tags:
-- cloud-native
-- containers
-- devops
-- kubernetes
-- kubernetes-dashboard
-- kubernetes-ui
-ReleaseNotes: |-
+  - cloud-native
+  - containers
+  - devops
+  - kubernetes
+  - kubernetes-dashboard
+  - kubernetes-ui
+ReleaseNotes: |
   ## What's Changed
   * Updated dependency @kubernetes/client-node to 1.2.0 which fully supports Kubernetes 1.33.
   * Correct depedencies for Freelens extensions that fixes problems with building extensions.
