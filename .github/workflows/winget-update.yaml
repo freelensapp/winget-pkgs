@@ -41,6 +41,12 @@ jobs:
           ref: updates
           path: updates.tmp
 
+      - name: Mise
+        uses: jdx/mise-action@v2
+        with:
+          tool_versions: |
+            yamlfmt 0.17.0 # datasource=github-releases depName=google/yamlfmt
+
       - name: Set version
         run: |
           echo "version=$(yq -r '.freelens' updates.tmp/.versions.yaml)" >> $GITHUB_ENV
