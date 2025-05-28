@@ -76,10 +76,10 @@ jobs:
 
       - name: Check for changes
         run: |
-          if git diff --exit-code HEAD; then
-            echo "changes=false" >> $GITHUB_ENV
-          else
+          if [[ -n "$(git status --porcelain)" ]]; then
             echo "changes=true" >> $GITHUB_ENV
+          else
+            echo "changes=false" >> $GITHUB_ENV
           fi
 
       - name: Commit and push to branch
