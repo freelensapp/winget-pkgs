@@ -39,4 +39,4 @@ yq '
 ' template/Freelensapp.Freelens.yaml \
 	>manifests/f/Freelensapp/Freelens/"${version}"/Freelensapp.Freelens.yaml
 
-yamlfmt -conf template/.yamlfmt.yaml manifests/f/Freelensapp/Freelens/*/*.yaml
+yamlfmt -conf template/.yamlfmt.yaml manifests/f/Freelensapp/Freelens/"${version}"/*.yaml
