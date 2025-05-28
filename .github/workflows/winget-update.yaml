@@ -70,13 +70,13 @@ jobs:
           mkdir -p manifests/f/Freelensapp/Freelens/${version}
           cd updates.tmp
           ln -s ../manifests manifests
-          bash make.sh
+          bash -x make.sh
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
 
       - name: Check for changes
         run: |
-          if git diff --exit-code; then
+          if git diff --exit-code HEAD; then
             echo "changes=false" >> $GITHUB_ENV
           else
             echo "changes=true" >> $GITHUB_ENV
