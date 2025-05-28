@@ -76,7 +76,8 @@ jobs:
               --base updates \
               --head automated/trunk-upgrade \
               --title "Automated trunk upgrade $(cat .github/pr_title.log) [skip ci]" \
-              --body-file .github/pr_body.log
+              --body-file .github/pr_body.log \
+              --label automated
           else
             gh pr edit automated/trunk-upgrade \
               --title "Automated trunk upgrade $(cat .github/pr_title.log) [skip ci]" \
