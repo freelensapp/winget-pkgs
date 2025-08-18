@@ -2,7 +2,7 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": ["config:recommended", ":semanticCommitsDisabled"],
   "addLabels": ["renovate"],
-  "baseBranches": ["updates"],
+  "baseBranchPatterns": ["updates"],
   "forkProcessing": "enabled",
   "customManagers": [
     {
