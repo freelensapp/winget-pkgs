@@ -1,18 +1,24 @@
 {
-  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["config:recommended", ":semanticCommitsDisabled"],
-  "addLabels": ["renovate"],
-  "baseBranchPatterns": ["updates"],
-  "forkProcessing": "enabled",
-  "customManagers": [
-    {
-      "customType": "regex",
-      "extractVersionTemplate": "^v?(?<version>.*)$",
-      "managerFilePatterns": ["/\\.ya?ml$/", "/^.tool-versions$/"],
-      "matchStrings": [
-        "(\\s+|.*?@)(?<currentValue>\\S+)\\s*#\\s*datasource=(?<datasource>\\S+)\\s+depName=(?<depName>\\S+)(\\s+versioning=(?<versioning>\\S+))?(\\s+registryUrl=(?<registryUrl>\\S+))?\\s*\\n"
-      ],
-      "versioningTemplate": "{{#if versioning}}{{{versioning}}}{{else}}semver{{/if}}"
-    }
-  ]
+	"$schema": "https://docs.renovatebot.com/renovate-schema.json",
+	"extends": ["config:recommended", ":semanticCommitsDisabled"],
+	"addLabels": ["renovate"],
+	"baseBranchPatterns": ["updates"],
+	"forkProcessing": "enabled",
+	"packageRules": [
+		{
+			"matchManagers": ["asdf"],
+			"enabled": false
+		}
+	],
+	"customManagers": [
+		{
+			"customType": "regex",
+			"extractVersionTemplate": "^v?(?<version>.*)$",
+			"managerFilePatterns": ["/\\.ya?ml$/", "/^.tool-versions$/"],
+			"matchStrings": [
+				"(\\s+|.*?@)(?<currentValue>\\S+)\\s*#\\s*datasource=(?<datasource>\\S+)\\s+depName=(?<depName>\\S+)(\\s+versioning=(?<versioning>\\S+))?(\\s+registryUrl=(?<registryUrl>\\S+))?\\s*\\n"
+			],
+			"versioningTemplate": "{{#if versioning}}{{{versioning}}}{{else}}semver{{/if}}"
+		}
+	]
 }
