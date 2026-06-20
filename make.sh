@@ -25,18 +25,18 @@ yq '
   (.Installers.[] | select(.Architecture == "arm64").InstallerUrl) = "'"${installerArm64Url}"'" |
   (.Installers.[] | select(.Architecture == "arm64").InstallerSha256) = "'"${installerArm64Sha256}"'"
 ' template/Freelensapp.Freelens.installer.yaml \
-	>manifests/f/Freelensapp/Freelens/"${version}"/Freelensapp.Freelens.installer.yaml
+  >manifests/f/Freelensapp/Freelens/"${version}"/Freelensapp.Freelens.installer.yaml
 
 yq '
   .PackageVersion = "'"${version}"'" |
   .ReleaseNotes = load_str("release-notes.tmp") |
   .ReleaseNotesUrl = "'"${releaseUrl}"'"
 ' template/Freelensapp.Freelens.locale.en-US.yaml \
-	>manifests/f/Freelensapp/Freelens/"${version}"/Freelensapp.Freelens.locale.en-US.yaml
+  >manifests/f/Freelensapp/Freelens/"${version}"/Freelensapp.Freelens.locale.en-US.yaml
 
 yq '
   .PackageVersion = "'"${version}"'"
 ' template/Freelensapp.Freelens.yaml \
-	>manifests/f/Freelensapp/Freelens/"${version}"/Freelensapp.Freelens.yaml
+  >manifests/f/Freelensapp/Freelens/"${version}"/Freelensapp.Freelens.yaml
 
 yamlfmt -conf template/.yamlfmt.yaml manifests/f/Freelensapp/Freelens/"${version}"/*.yaml
