@@ -4,14 +4,6 @@ on:
   issue_comment:
     types:
       - created
-  push:
-    branches:
-      - updates
-    paths:
-      - .github/workflows/winget-update.yaml
-      - .versions.yaml
-      - make.sh
-      - template/**
   workflow_dispatch: {}
 
 permissions:
