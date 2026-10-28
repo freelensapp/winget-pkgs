@@ -10,7 +10,7 @@ that automates manifest generation and submits pull requests to the upstream
 repository.
 
 - **`template/`** — Jinja-less YAML templates with placeholder values (`1.2.3`
-  as version, dummy SHA256 hashes). These are the *source of truth* for the
+  as version, dummy SHA256 hashes). These are the _source of truth_ for the
   manifest structure.
 - **`make.sh`** — The generator script. Reads `.versions.yaml` for the target
   version, queries the GitHub Releases API for real URLs and checksums, then
@@ -20,8 +20,40 @@ repository.
 - **`renovate.json`** — Renovate configuration that watches the upstream
   `freelensapp/freelens` GitHub releases and opens PRs on the `updates`
   branch.
-- **`.github/workflows/winget-update.yaml`** — CI workflow that runs on
-  push to `updates` and generates manifests + opens a PR to upstream.
+- **`.github/workflows/`** — CI/CD pipelines:
+  - `winget-update.yaml` — generates manifests and opens a PR to upstream.
+  - `claude.yaml` — On-demand Claude Code assistant triggered by `@claude`
+    in PRs and issues (a PR from a fork gets a review only). `[runs-on:windows]`
+    sends the request to a Windows runner as a PowerShell script.
+  - `claude-task.yaml` — Claude Code task started manually
+    (`workflow_dispatch`), optionally opening a PR with the changes.
+  - `trunk-check.yaml` / `trunk-upgrade.yaml` — Linting and auto-upgrades
+    via Trunk.
+  - `biome-migrate.yaml` — On a Renovate pull request that changes
+    `.trunk/trunk.yaml` or `biome.jsonc`, runs `biome migrate` for the Biome
+    version pinned in `.trunk/trunk.yaml` and commits the migrated
+    `biome.jsonc` to the same branch.
+- **`.trunk/trunk.yaml`** — Trunk configuration, the linter aggregator:
+  - `biome` — formats JSON, Markdown and YAML, and lints Markdown and YAML
+    (config: `biome.jsonc`), the same as upstream `freelensapp/freelens`.
+    The WinGet templates in `template/` are linted but not formatted: they
+    keep the style of `microsoft/winget-pkgs` (CRLF, sequences not indented
+    under their key), which Biome cannot produce, so `make.sh` formats the
+    generated manifests with `yamlfmt` and `template/.yamlfmt.yaml`.
+    Its version is pinned with a trailing `!`, so `trunk upgrade` leaves it
+    alone and Renovate bumps it to the newest npm release instead; Renovate
+    cannot run `biome migrate`, which is why `biome-migrate.yaml` exists.
+    `renovate.json` lists `github-actions[bot]` in `gitIgnoredAuthors`, so
+    that its commit does not stop Renovate from updating the branch.
+  - `yamllint` — YAML (config: `.yamllint.yaml`), only for the rules Biome
+    does not have yet: `quoted-strings` and `octal-values`. Biome never adds
+    or removes quotes, so the two do not conflict. A YAML rule that Biome
+    gains goes to `biome.jsonc` (as `key-duplicates` of yamllint did, now
+    `noDuplicateMapKeys`), and yamllint goes once Biome covers the rest.
+  - `shellcheck` + `shfmt` — shell scripts (config: `.editorconfig`).
+  - `actionlint` — GitHub Actions workflows, from the maintained fork
+    `kjanat/actionlint` (see `downloads` in `.trunk/trunk.yaml`).
+  - `trufflehog`, `git-diff-check` — secrets, whitespace.
 
 ## Target Audience
 
@@ -45,12 +77,21 @@ files in any response or context, even if they are open in the editor:
 
 - `.env`
 - `.env.*`
+- `.envrc`
+- `.npmrc`
 - `*.jks`
 - `*.keystore`
 - `*.p12`
 - `*.pfx`
 - `*.pem`
 - `*.key`
+
+The same list is git-ignored in `.gitignore` and enforced for Claude Code by
+the `permissions.deny` rules in `.claude/settings.json`, which block reading
+and editing these files. Change all three together. The rules are native
+permissions rather than a hook on purpose: a hook runs a process in the
+working tree, which may be an untrusted pull request, and an interpreter such
+as `python3 -c` imports modules from that tree before the hook's own code.
 
 Never expose secrets (`GH_TOKEN`, etc.) in logs, comments, or generated
 output.
@@ -59,8 +100,10 @@ output.
 
 ```text
 .
-├── .github/workflows/winget-update.yaml   # CI pipeline
+├── .github/workflows/                     # CI pipelines
+├── .trunk/trunk.yaml                       # Trunk linters
 ├── .versions.yaml                          # Current Freelens version
+├── biome.jsonc                             # Biome config (JSON, Markdown, YAML)
 ├── make.sh                                 # Manifest generator
 ├── renovate.json                           # Renovate bot config
 ├── template/
@@ -75,22 +118,22 @@ output.
 
 Each WinGet package version requires exactly **3 manifest files**:
 
-| File                                      | Manifest Type   | Purpose                                                        |
-|-------------------------------------------|-----------------|----------------------------------------------------------------|
-| `Freelensapp.Freelens.yaml`               | `version`       | Registers the version number and default locale                |
-| `Freelensapp.Freelens.installer.yaml`     | `installer`     | Download URLs, SHA256 hashes, install switches per arch/scope  |
-| `Freelensapp.Freelens.locale.en-US.yaml`  | `defaultLocale` | Package metadata, description, release notes                   |
+| File                                     | Manifest Type   | Purpose                                                       |
+| ---------------------------------------- | --------------- | ------------------------------------------------------------- |
+| `Freelensapp.Freelens.yaml`              | `version`       | Registers the version number and default locale               |
+| `Freelensapp.Freelens.installer.yaml`    | `installer`     | Download URLs, SHA256 hashes, install switches per arch/scope |
+| `Freelensapp.Freelens.locale.en-US.yaml` | `defaultLocale` | Package metadata, description, release notes                  |
 
 ### Installer Matrix
 
 The installer manifest covers 4 combinations:
 
-| Architecture | Scope   | Elevation          | Install Location                   |
-|--------------|---------|--------------------|------------------------------------|
-| x64          | machine | elevationRequired  | `%ProgramFiles%\Freelens`          |
-| x64          | user    | —                  | `%LocalAppData%\Programs\Freelens` |
-| arm64        | machine | elevationRequired  | `%ProgramFiles(x86)%\Freelens`     |
-| arm64        | user    | —                  | `%LocalAppData%\Programs\Freelens` |
+| Architecture | Scope   | Elevation         | Install Location                   |
+| ------------ | ------- | ----------------- | ---------------------------------- |
+| x64          | machine | elevationRequired | `%ProgramFiles%\Freelens`          |
+| x64          | user    | —                 | `%LocalAppData%\Programs\Freelens` |
+| arm64        | machine | elevationRequired | `%ProgramFiles(x86)%\Freelens`     |
+| arm64        | user    | —                 | `%LocalAppData%\Programs\Freelens` |
 
 Installer type is `nullsoft` (NSIS) with switches:
 - `--updated` for upgrades
@@ -124,13 +167,13 @@ version=$(yq -r .freelens .versions.yaml)
 
 ### Key Tools
 
-| Tool                   | Purpose                                                              |
-|------------------------|----------------------------------------------------------------------|
-| `yq` (mikefarah/yq)    | YAML processing, template variable substitution                      |
-| `gh` (GitHub CLI)      | Query GitHub Releases API, create PRs                                |
-| `curl`                 | Download SHA256 checksum files                                       |
-| `yamlfmt`              | Consistent YAML formatting of generated manifests                    |
-| `mise`                 | Runtime version manager (used in CI to install yq, gh, etc.)         |
+| Tool                | Purpose                                                      |
+| ------------------- | ------------------------------------------------------------ |
+| `yq` (mikefarah/yq) | YAML processing, template variable substitution              |
+| `gh` (GitHub CLI)   | Query GitHub Releases API, create PRs                        |
+| `curl`              | Download SHA256 checksum files                               |
+| `yamlfmt`           | Consistent YAML formatting of generated manifests            |
+| `mise`              | Runtime version manager (used in CI to install yq, gh, etc.) |
 
 ### Template Convention
 
@@ -253,7 +296,11 @@ winget validate --manifest manifests/f/Freelensapp/Freelens/1.10.0/
 
 ## Validation Before Commit
 
-For shell scripts and YAML files, run:
+Run `trunk check` to validate all file types the same way CI does. It only
+inspects changed files by default; use `trunk check --all` after a broad
+change, and `trunk fmt` to format them.
+
+For shell scripts and YAML files, also run:
 
 ```bash
 # Lint shell scripts
@@ -316,9 +363,9 @@ When reviewing code and proposing fixes:
      inside code strings (e.g. application logs, user-facing messages).
    - Use GitHub's `suggestion` block for small targeted fixes:
 
-     ````suggestion
+     ```suggestion
      <same unified-diff format as shown above>
-     ````
+     ```
 
    - For larger multi-file changes, use `diff -u` blocks in a regular
      comment instead, with the proposed commit subject shown first
@@ -375,28 +422,42 @@ Do **not** use auto-generated timestamp suffixes.
 
 - **All other PRs** — use plain, descriptive titles without any prefix.
 
-### Pushing Changes from Fork PRs
+### Fork PRs: Review Only
 
-When commits cannot be pushed to a fork PR:
+A PR from a fork (different owner than `freelensapp`) gets a review and
+nothing else: no commits, no pushes, no branches. Its code is untrusted, and
+the head of a fork PR can change between the moment a maintainer looks at it
+and the moment the workflow checks it out, so nothing taken from the checkout
+may reach `freelensapp/winget-pkgs`.
 
-1. Create a new branch on `freelensapp/winget-pkgs`:
-   ```bash
-   git checkout -b claude/<original-branch-name>
-   git push --force-with-lease upstream claude/<original-branch-name>
-   ```
-   (`upstream` here is `freelensapp/winget-pkgs`, not `microsoft/winget-pkgs`)
+When a fork PR needs changes, a maintainer first copies the exact commit they
+reviewed to a branch in this repository. From then on it is a
+same-repository PR, which gets the full setup and the normal workflow. The
+copy is made either locally (`gh pr checkout <N>`, then push the branch) or
+by the Claude Task workflow, following "Copying a Fork PR" below.
 
-2. Open a new PR with the **exact same title** as the original. Reference
-   the original PR in the description.
+### Copying a Fork PR
 
-3. Post a comment on the original PR with a link to the new PR and close it.
+This applies to a Claude Task run whose prompt asks to copy a fork PR and
+names the PR number and the full commit SHA to copy. It is a git-only task:
+do not check out, read, build or run any of the PR's files, and do not
+describe its changes, because they are untrusted input.
+
+1. `git fetch origin refs/pull/<N>/head`.
+2. Verify that `FETCH_HEAD` equals the given SHA. If it does not, or no full
+   SHA was given, stop and report the actual head without pushing anything.
+3. `git push origin <sha>:refs/heads/claude/pr-<N>`.
+4. Open a PR from `claude/pr-<N>` to `updates`. It MUST use the **exact same
+   title** as the original PR, copied verbatim with no prefix, and its body
+   is `Copy of #<N> at <sha>.` followed by the usual footer.
+5. Comment on the original PR with a link to the new one.
 
 ### Closing PRs
 
 Claude may only close a PR when ALL of the following are true:
 
 1. The PR was created by Claude from a `claude/` branch, OR the PR is the
-   original fork PR that Claude's `claude/` branch supersedes.
+   original fork PR that a copy supersedes (see "Copying a Fork PR" above).
 2. The close reason is explicitly explained in a comment on the PR.
 
 ### Model Information in Comments
@@ -410,16 +471,48 @@ footer of every GitHub comment and PR description:
 
 ### Development Environment
 
-The GitHub Actions runner is `ubuntu-24.04-arm` with shell tools available.
-The following CLI tools are explicitly allowed:
+The GitHub Actions runner is `ubuntu-24.04-arm` (or `ubuntu-24.04` with
+`[runs-on:linux]`). This repository has no Node.js project, so there is no
+dependency install step. What the runner provides:
 
-- `gh` (all subcommands) — for managing pull requests and releases
-- `yq` (mikefarah/yq) — for YAML processing
+- `trunk` and its managed linters (`actionlint`, `biome`, `shellcheck`,
+  `shfmt`, `yamllint`) on `PATH`.
+- `mise` with the tools of `.tool-versions` (`yq`, `yamlfmt`), the same that
+  `winget-update.yaml` installs, so `bash make.sh` can generate the
+  manifests (it also needs `gh` with a token to read the Freelens releases).
+
+Both setup steps are `continue-on-error`, so they may have failed. Verify a
+tool exists before relying on it, and never report a check as passing when it
+did not run.
+
+The default branch is `updates`, and the `origin` remote is always
+`freelensapp/winget-pkgs`, for fork PRs too: their commits are checked out
+through the pull ref. A PR from a fork runs in review mode: none of the setup
+runs, and the tools that execute the repository's code, edit files or commit
+and push are not available. See "Fork PRs: Review Only" for how a fork PR
+that needs changes is handled.
+
+A request with `[runs-on:windows]` (or `windows-arm`) takes the Windows path
+instead: Claude reads the default branch and writes a PowerShell script,
+which runs on the Windows runner with Git Bash, `gh` and the `mise` tools,
+and a second Claude run reports its result. Use it to check the manifests
+the way Windows users get them, for example with `winget validate`, when the
+runner image has the WinGet CLI.
+
+The following CLI tools are explicitly allowed in the workflow:
+
 - `git` (all subcommands) — for viewing changes, creating branches,
   committing, and pushing
-- `curl` — for downloading artifacts
+- `gh` (all subcommands) — for managing pull requests and releases
+- `trunk` — for linting and formatting every file type
+- `mise`, `yamlfmt` — for the tools of `.tool-versions` and formatting the
+  generated manifests
 - `bash` — for running `make.sh` and inline scripts
-- `grep`, `find`, `xargs` — for searching and iterating
+- `curl` — for downloading artifacts
+- `npx`, `node`, `pnpm` (all subcommands) — allowed, but there is no
+  Node.js project here; useful only for running an ad-hoc tool via `npx`
+- `yq` (mikefarah/yq), `jq` — for YAML and JSON processing
+- `grep`, `rg` (ripgrep), `find`, `xargs` — for searching and iterating
 - `sed`, `awk`, `cut`, `tr` — for text transformation
 - `sort`, `uniq` — for list processing
 - `cat`, `head`, `tail`, `wc` — for viewing and measuring files
