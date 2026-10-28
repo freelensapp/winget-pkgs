@@ -44,7 +44,7 @@ jobs:
       - name: Install mise
         uses: jdx/mise-action@v5
         with:
-          version: 2026.10.19 # datasource=github-releases depName=jdx/mise
+          version: 2026.10.21 # datasource=github-releases depName=jdx/mise
           working_directory: updates.tmp
 
       - name: Set version
