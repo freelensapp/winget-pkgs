@@ -161,7 +161,8 @@ version=$(yq -r .freelens .versions.yaml)
 #    - PackageVersion → ${version}
 #    - ReleaseDate → ${releaseDate}
 #    - InstallerUrl / InstallerSha256 → real values per architecture
-#    - ReleaseNotes → release body from GitHub
+#    - ReleaseNotes → release body from GitHub, cut at a whole line to the
+#      10000 characters the WinGet schema allows, with a link to the release
 #    - ReleaseNotesUrl → release URL
 
 # 5. Write output to manifests/f/Freelensapp/Freelens/${version}/

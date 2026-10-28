@@ -14,6 +14,19 @@ installerX64Sha256=$(curl -sSL "${installerX64Sha256Url}" | cut -f1 -d' ' | tr '
 installerArm64Sha256=$(curl -sSL "${installerArm64Sha256Url}" | cut -f1 -d' ' | tr '[:lower:]' '[:upper:]')
 
 gh release view v"${version}" -R freelensapp/freelens --json body --jq .body | tr -d '\015' | sed -z 's/\n*$//' >release-notes.tmp
+
+# The WinGet schema allows at most 10000 characters in ReleaseNotes. Longer
+# notes keep the whole lines that fit, without a heading left empty at the
+# end, and end with a link to the release.
+RELEASE_URL="${releaseUrl}" MAX_LENGTH=10000 perl -CSD -0777 -i -pe '
+  my $more = "\n\n...\n\nFull release notes: $ENV{RELEASE_URL}";
+  if (length > $ENV{MAX_LENGTH}) {
+    $_ = substr($_, 0, $ENV{MAX_LENGTH} - length $more);
+    s/\n[^\n]*\z//;
+    1 while s/\n+\z// or s/\n#[^\n]*\z//;
+    $_ .= $more;
+  }
+' release-notes.tmp
 mkdir -p manifests/f/Freelensapp/Freelens/"${version}"
 
 yq '
