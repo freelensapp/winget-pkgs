@@ -77,10 +77,15 @@ jobs:
         uses: trunk-io/trunk-action/install@v2.0.0
         continue-on-error: true
 
-      # The tools pinned in .tool-versions (yq, yamlfmt), the same that
-      # winget-update.yaml installs for make.sh. Never fails the job.
+      # The tools of mise.toml (yq, yamlfmt), verified against mise.lock, the
+      # same that winget-update.yaml installs for make.sh. No cache, as in
+      # claude.yaml. Never fails the job.
       - name: Install mise
-        uses: jdx/mise-action@v4
+        uses: jdx/mise-action@v5
+        with:
+          version: 2026.10.19 # datasource=github-releases depName=jdx/mise
+          cache: false
+        timeout-minutes: 5
         continue-on-error: true
 
       - name: Prepare prompt

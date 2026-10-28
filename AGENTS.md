@@ -33,6 +33,9 @@ repository.
     `.trunk/trunk.yaml` or `biome.jsonc`, runs `biome migrate` for the Biome
     version pinned in `.trunk/trunk.yaml` and commits the migrated
     `biome.jsonc` to the same branch.
+  - `mise-lock-check.yaml` — On pull requests that change `mise.toml` or
+    `mise.lock`, installs the tools from the lock file and fails when a
+    checksum changed while the tool version did not.
 - **`.trunk/trunk.yaml`** — Trunk configuration, the linter aggregator:
   - `biome` — formats JSON, Markdown and YAML, and lints Markdown and YAML
     (config: `biome.jsonc`), the same as upstream `freelensapp/freelens`.
@@ -105,6 +108,7 @@ output.
 ├── .versions.yaml                          # Current Freelens version
 ├── biome.jsonc                             # Biome config (JSON, Markdown, YAML)
 ├── make.sh                                 # Manifest generator
+├── mise.toml / mise.lock                  # yq and yamlfmt for make.sh
 ├── renovate.json                           # Renovate bot config
 ├── template/
 │   ├── Freelensapp.Freelens.installer.yaml # Installer manifest template
@@ -167,13 +171,13 @@ version=$(yq -r .freelens .versions.yaml)
 
 ### Key Tools
 
-| Tool                | Purpose                                                      |
-| ------------------- | ------------------------------------------------------------ |
-| `yq` (mikefarah/yq) | YAML processing, template variable substitution              |
-| `gh` (GitHub CLI)   | Query GitHub Releases API, create PRs                        |
-| `curl`              | Download SHA256 checksum files                               |
-| `yamlfmt`           | Consistent YAML formatting of generated manifests            |
-| `mise`              | Runtime version manager (used in CI to install yq, gh, etc.) |
+| Tool                | Purpose                                                   |
+| ------------------- | --------------------------------------------------------- |
+| `yq` (mikefarah/yq) | YAML processing, template variable substitution           |
+| `gh` (GitHub CLI)   | Query GitHub Releases API, create PRs                     |
+| `curl`              | Download SHA256 checksum files                            |
+| `yamlfmt`           | Consistent YAML formatting of generated manifests         |
+| `mise`              | Tool version manager (`mise.toml`, locked in `mise.lock`) |
 
 ### Template Convention
 
@@ -237,8 +241,15 @@ branch bumping the version. Merging that PR triggers the CI workflow.
 Key settings:
 - `semanticCommitsDisabled: true` — no conventional commit prefixes
 - `forkProcessing: enabled` — works on forked repositories
-- ASDF plugin manager is disabled (`matchManagers: ["asdf"] → enabled: false`)
-  because this repo doesn't use `.tool-versions` for tool installation
+- The tools of `make.sh` (`yq`, `yamlfmt`) are in `mise.toml`, with checksums
+  and URLs per platform in `mise.lock`. Renovate bumps them with its `mise`
+  manager, and lock file maintenance (automerged) refreshes `mise.lock`.
+  `mise-lock-check.yaml` installs the tools from the lock and fails when a
+  checksum changed while the tool version did not.
+
+After changing a version in `mise.toml`, regenerate the lock with `mise lock`,
+which refreshes every platform in the file; `mise install` re-locks only the
+platform it runs on.
 
 ## Common Tasks
 
@@ -477,7 +488,7 @@ dependency install step. What the runner provides:
 
 - `trunk` and its managed linters (`actionlint`, `biome`, `shellcheck`,
   `shfmt`, `yamllint`) on `PATH`.
-- `mise` with the tools of `.tool-versions` (`yq`, `yamlfmt`), the same that
+- `mise` with the tools of `mise.toml` (`yq`, `yamlfmt`), the same that
   `winget-update.yaml` installs, so `bash make.sh` can generate the
   manifests (it also needs `gh` with a token to read the Freelens releases).
 
@@ -505,7 +516,7 @@ The following CLI tools are explicitly allowed in the workflow:
   committing, and pushing
 - `gh` (all subcommands) — for managing pull requests and releases
 - `trunk` — for linting and formatting every file type
-- `mise`, `yamlfmt` — for the tools of `.tool-versions` and formatting the
+- `mise`, `yamlfmt` — for the tools of `mise.toml` and formatting the
   generated manifests
 - `bash` — for running `make.sh` and inline scripts
 - `curl` — for downloading artifacts

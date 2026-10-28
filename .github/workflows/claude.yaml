@@ -298,14 +298,20 @@ jobs:
         uses: trunk-io/trunk-action/install@v2.0.0
         continue-on-error: true
 
-      # The tools pinned in .tool-versions (yq, yamlfmt), the same that
-      # winget-update.yaml installs for make.sh, so Claude can generate the
-      # manifests. mise reads .tool-versions of the checked out tree, so it is
-      # skipped for a fork pull request. Never fails the job — Claude should
-      # still run and report that the tools were unavailable.
+      # The tools of mise.toml (yq, yamlfmt), verified against mise.lock, the
+      # same that winget-update.yaml installs for make.sh, so Claude can
+      # generate the manifests. mise reads mise.toml of the checked out tree,
+      # so it is skipped for a fork pull request. No cache: installing takes
+      # seconds, and a hanging cache lookup once held an upstream job for 25
+      # minutes. Never fails the job — Claude should still run and report that
+      # the tools were unavailable.
       - name: Install mise
         if: needs.parse.outputs.is-fork != 'true'
-        uses: jdx/mise-action@v4
+        uses: jdx/mise-action@v5
+        with:
+          version: 2026.10.19 # datasource=github-releases depName=jdx/mise
+          cache: false
+        timeout-minutes: 5
         continue-on-error: true
 
       # Fetched by URL from the base repository, so the system prompt never
@@ -497,7 +503,7 @@ jobs:
             them, the script generates them first with `bash make.sh`, which
             writes them to manifests/f/Freelensapp/Freelens/<version>/. The runner
             has Git Bash, gh with GH_TOKEN set, and mise with the tools of
-            .tool-versions (yq, yamlfmt), installed on a best-effort basis. The
+            mise.toml (yq, yamlfmt), installed on a best-effort basis. The
             WinGet CLI (winget validate, winget install --manifest) may be missing
             from the runner image. Check every tool with Get-Command before using
             it, and report a missing one in the summary rather than failing
@@ -546,10 +552,14 @@ jobs:
         with:
           fetch-depth: 0
 
-      # The tools of .tool-versions for make.sh, as in winget-update.yaml.
+      # The tools of mise.toml for make.sh, as in winget-update.yaml.
       # Generating the manifests is left to the script.
       - name: Install mise
-        uses: jdx/mise-action@v4
+        uses: jdx/mise-action@v5
+        with:
+          version: 2026.10.19 # datasource=github-releases depName=jdx/mise
+          cache: false
+        timeout-minutes: 5
         continue-on-error: true
 
       - name: Download PowerShell script
