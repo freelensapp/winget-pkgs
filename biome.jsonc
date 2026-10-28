@@ -1,0 +1,61 @@
+{
+  // Ignore mismatch for Biome version to make trunk upgrade updates without error
+  // trunk-ignore(biome/deserialize)
+  "$schema": "https://biomejs.dev/schemas/2.6.3/schema.json",
+  "files": {
+    // Trunk rewrites its own .trunk/trunk.yaml on every trunk upgrade.
+    "includes": ["**", "!**/.trunk/**", "!**/tmp/**"]
+  },
+  "formatter": {
+    "attributePosition": "auto",
+    "bracketSpacing": true,
+    "enabled": true,
+    "formatWithErrors": false,
+    "indentStyle": "space",
+    "indentWidth": 2,
+    "lineEnding": "lf",
+    "lineWidth": 120,
+    "useEditorconfig": true
+  },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "nursery": {
+        // Markdown
+        "useConsistentHeadingLevel": "error",
+        "useFencedCodeLanguage": "error",
+        "useSingleTopLevelHeading": "error",
+        // YAML, the same as key-duplicates of yamllint, but it also sees a
+        // quoted and an unquoted form of the same key as duplicates.
+        "noDuplicateMapKeys": "error"
+      },
+      "preset": "none"
+    }
+  },
+  "overrides": [
+    {
+      // The WinGet manifest templates keep the style of microsoft/winget-pkgs,
+      // with sequences not indented under their key, which Biome cannot
+      // produce. make.sh formats the generated manifests with yamlfmt and
+      // template/.yamlfmt.yaml instead; the linter still runs on them. The
+      // leading **/ is needed: Trunk runs biome on a copy of the files outside
+      // the repository, where template/** does not match.
+      "includes": ["**/template/**"],
+      "formatter": {
+        "enabled": false
+      }
+    }
+  ],
+  "vcs": {
+    "clientKind": "git",
+    "enabled": true,
+    "useIgnoreFile": true
+  },
+  "yaml": {
+    "formatter": {
+      // Flow sequences stay [a, b], as yamlfmt left them; the global
+      // bracketSpacing is meant for JavaScript objects.
+      "bracketSpacing": false
+    }
+  }
+}

@@ -39,9 +39,12 @@ jobs:
           ref: updates
           path: updates.tmp
 
+      # mise-action adds --locked on its own when a lockfile is present, so
+      # yq and yamlfmt are verified against mise.lock.
       - name: Install mise
-        uses: jdx/mise-action@v4
+        uses: jdx/mise-action@v5
         with:
+          version: 2026.10.19 # datasource=github-releases depName=jdx/mise
           working_directory: updates.tmp
 
       - name: Set version

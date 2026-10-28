@@ -1,24 +1,49 @@
 {
-	"$schema": "https://docs.renovatebot.com/renovate-schema.json",
-	"extends": ["config:recommended", ":semanticCommitsDisabled"],
-	"addLabels": ["renovate"],
-	"baseBranchPatterns": ["updates"],
-	"forkProcessing": "enabled",
-	"packageRules": [
-		{
-			"matchManagers": ["asdf"],
-			"enabled": false
-		}
-	],
-	"customManagers": [
-		{
-			"customType": "regex",
-			"extractVersionTemplate": "^v?(?<version>.*)$",
-			"managerFilePatterns": ["/\\.ya?ml$/", "/^.tool-versions$/"],
-			"matchStrings": [
-				"(\\s+|.*?@)(?<currentValue>\\S+)\\s*#\\s*datasource=(?<datasource>\\S+)\\s+depName=(?<depName>\\S+)(\\s+versioning=(?<versioning>\\S+))?(\\s+registryUrl=(?<registryUrl>\\S+))?\\s*\\n"
-			],
-			"versioningTemplate": "{{#if versioning}}{{{versioning}}}{{else}}semver{{/if}}"
-		}
-	]
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "description": [
+    "baseBranchPatterns: updates is the working branch of this fork; master mirrors microsoft/winget-pkgs.",
+    "ignoreDeps: ubuntu runners must stay on the oldest supported version.",
+    "gitIgnoredAuthors: biome-migrate.yaml commits the migrated biome.jsonc to a Renovate branch as github-actions[bot]; without this, Renovate takes that commit for a manual edit, marks the pull request as edited and stops updating it."
+  ],
+  "extends": ["config:recommended", ":semanticCommitsDisabled"],
+  "addLabels": ["renovate"],
+  "baseBranchPatterns": ["updates"],
+  "forkProcessing": "enabled",
+  "ignoreDeps": ["ubuntu"],
+  "gitIgnoredAuthors": ["41898282+github-actions[bot]@users.noreply.github.com"],
+  "lockFileMaintenance": {
+    "description": [
+      "mise.lock pins a checksum and a URL per tool per platform, but a local `mise install` re-locks only the platform it runs on and silently leaves the others stale.",
+      "Lock file maintenance runs plain `mise lock`, which refreshes every tool on every platform already in the file.",
+      "Defaults are disabled and weekly, hence the explicit settings. The packageRules keep it to mise.lock."
+    ],
+    "enabled": true,
+    "schedule": ["at any time"],
+    "automerge": true
+  },
+  "packageRules": [
+    {
+      "description": "No lock file maintenance by default.",
+      "matchUpdateTypes": ["lockFileMaintenance"],
+      "enabled": false
+    },
+    {
+      "description": "Lock file maintenance for mise.lock only.",
+      "matchManagers": ["mise"],
+      "matchUpdateTypes": ["lockFileMaintenance"],
+      "enabled": true
+    }
+  ],
+  "customManagers": [
+    {
+      "description": "Renovate hints after a comment: `# datasource=<datasource> depName=<depName>`. A trailing ! of a version pinned in .trunk/trunk.yaml is left out of the version.",
+      "customType": "regex",
+      "extractVersionTemplate": "^v?(?<version>.*)$",
+      "managerFilePatterns": ["/\\.ya?ml$/"],
+      "matchStrings": [
+        "(\\s+|.*?@)(?<currentValue>\\S+?)!?\\s*#\\s*datasource=(?<datasource>\\S+)\\s+depName=(?<depName>\\S+)(\\s+versioning=(?<versioning>\\S+))?(\\s+registryUrl=(?<registryUrl>\\S+))?\\s*\\n"
+      ],
+      "versioningTemplate": "{{#if versioning}}{{{versioning}}}{{else}}semver{{/if}}"
+    }
+  ]
 }
